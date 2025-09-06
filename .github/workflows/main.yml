@@ -1,33 +1,21 @@
-name: CI/CD for static site
+name: Deploy static site to GitHub Pages
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test   # will fail the workflow if tests fail
-
-      - name: Build project
-        run: npm run build
-
+      # 2. Deploy directly to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist   # or ./build depending on your framework
+          publish_dir: ./   # points to the root folder with your HTML/CSS/JS
