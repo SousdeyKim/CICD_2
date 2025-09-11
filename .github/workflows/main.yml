@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Deploy to server via ngrok SSH
-        env: 
+        env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           DEPLOYMENT_DIRECTORY: ${{ vars.DEPLOYMENT_DIRECTORY }}
           SSH_HOST: ${{ vars.SSH_HOST }}
@@ -22,8 +22,21 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
+          # sanitize deployment directory (remove CR/LF)
+          DEPLOYMENT_DIRECTORY=$(echo "$DEPLOYMENT_DIRECTORY" | tr -d '\r\n')
+
+          # Debug check
+          printf 'DEPLOYMENT_DIRECTORY=[%s]\n' "$DEPLOYMENT_DIRECTORY"
+          printf 'Hex dump:\n'
+          printf '%s' "$DEPLOYMENT_DIRECTORY" | hexdump -C
           
           # Remove old project and upload new one
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SSH_HOST_PORT $SSH_USER@$SSH_HOST "rm -rf $DEPLOYMENT_DIRECTORY"
-          scp -r -P $SSH_HOST_PORT -o StrictHostKeyChecking=no ./* $SSH_USER@$SSH_HOST:$DEPLOYMENT_DIRECTORY
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SSH_HOST_PORT $SSH_USER@$SSH_HOST "chmod 755 -R $DEPLOYMENT_DIRECTORY"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SSH_HOST_PORT \
+            $SSH_USER@$SSH_HOST "rm -rf $DEPLOYMENT_DIRECTORY"
+          
+          scp -r -P $SSH_HOST_PORT -o StrictHostKeyChecking=no ./* \
+            $SSH_USER@$SSH_HOST:$DEPLOYMENT_DIRECTORY
+          
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SSH_HOST_PORT \
+            $SSH_USER@$SSH_HOST "chmod 755 -R $DEPLOYMENT_DIRECTORY"
